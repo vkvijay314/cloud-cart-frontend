@@ -9,7 +9,9 @@ function Checkout() {
   const [loading, setLoading] = useState(true);
   const [placing, setPlacing] = useState(false);
 
-  /* ADDRESS */
+  /* ==============================
+     ADDRESS STATE
+  ============================== */
   const [address, setAddress] = useState({
     name: "",
     phone: "",
@@ -18,10 +20,14 @@ function Checkout() {
     pincode: ""
   });
 
-  /* PAYMENT METHOD */
+  /* ==============================
+     PAYMENT METHOD
+  ============================== */
   const [paymentMethod, setPaymentMethod] = useState("COD");
 
-  /* FETCH CART */
+  /* ==============================
+     FETCH CART
+  ============================== */
   useEffect(() => {
     const fetchCart = async () => {
       try {
@@ -37,7 +43,9 @@ function Checkout() {
     fetchCart();
   }, []);
 
-  /* NORMALIZED CART ITEMS */
+  /* ==============================
+     NORMALIZE CART ITEMS
+  ============================== */
   const cartItems = useMemo(() => {
     return rawItems
       .filter(item => item?.product && item.quantity > 0)
@@ -49,7 +57,9 @@ function Checkout() {
       }));
   }, [rawItems]);
 
-  /* TOTAL */
+  /* ==============================
+     TOTAL AMOUNT
+  ============================== */
   const total = useMemo(() => {
     return cartItems.reduce(
       (sum, item) => sum + item.price * item.quantity,
@@ -57,7 +67,9 @@ function Checkout() {
     );
   }, [cartItems]);
 
-  /* ADDRESS HANDLER */
+  /* ==============================
+     ADDRESS HANDLER
+  ============================== */
   const handleChange = (e) => {
     setAddress(prev => ({
       ...prev,
@@ -75,7 +87,9 @@ function Checkout() {
     );
   };
 
-  /* COD ORDER */
+  /* ==============================
+     PLACE COD ORDER
+  ============================== */
   const placeCODOrder = async () => {
     if (!validateAddress()) {
       alert("Please fill complete address");
@@ -97,7 +111,9 @@ function Checkout() {
     }
   };
 
-  /* ONLINE PAYMENT (RAZORPAY) */
+  /* ==============================
+     ONLINE PAYMENT (RAZORPAY)
+  ============================== */
   const payWithRazorpay = async () => {
     if (!validateAddress()) {
       alert("Please fill complete address");
@@ -107,7 +123,7 @@ function Checkout() {
     try {
       setPlacing(true);
 
-      // ✅ backend calculates amount
+      // backend calculates amount securely
       const orderRes = await api.post("/api/checkout/create");
 
       const options = {
@@ -117,12 +133,14 @@ function Checkout() {
         order_id: orderRes.data.orderId,
         name: "CloudCart",
         description: "Secure Payment",
+        image: "https://razorpay.com/assets/razorpay-glyph.svg",
 
         handler: async (response) => {
           await api.post("/api/checkout/verify", {
             razorpay_order_id: response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature
+            razorpay_signature: response.razorpay_signature,
+            address
           });
 
           navigate("/orders");
@@ -138,6 +156,9 @@ function Checkout() {
     }
   };
 
+  /* ==============================
+     RENDER
+  ============================== */
   if (loading) return <h3>Loading checkout...</h3>;
   if (cartItems.length === 0) return <h3>Your cart is empty</h3>;
 
@@ -195,14 +216,21 @@ function Checkout() {
         disabled={placing}
         onClick={paymentMethod === "COD" ? placeCODOrder : payWithRazorpay}
       >
-        {placing ? "Processing..." : paymentMethod === "COD" ? "Place Order" : "Pay Now"}
+        {placing
+          ? "Processing..."
+          : paymentMethod === "COD"
+          ? "Place Order"
+          : "Pay Now"}
       </button>
     </div>
   );
 }
 
 const styles = {
-  container: { maxWidth: "600px", margin: "30px auto" },
+  container: {
+    maxWidth: "600px",
+    margin: "30px auto"
+  },
   card: {
     background: "#fff",
     padding: "15px",
