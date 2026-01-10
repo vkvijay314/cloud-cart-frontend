@@ -1,0 +1,140 @@
+/* ===== BASE ===== */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: #111827;
+  color: #fff;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.navbar-logo {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* ===== LINKS ===== */
+.navbar-link {
+  color: #e5e7eb;
+  text-decoration: none;
+  font-weight: 500;
+  position: relative;
+  transition: color 0.25s ease;
+}
+
+.navbar-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+  width: 0%;
+  height: 2px;
+  background: #60a5fa;
+  transition: width 0.3s ease;
+}
+
+.navbar-link:hover {
+  color: #60a5fa;
+}
+
+.navbar-link:hover::after {
+  width: 100%;
+}
+
+/* ===== DESKTOP LINKS ===== */
+.desktop-links {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+/* ===== USER ===== */
+.navbar-user {
+  color: #9ca3af;
+}
+
+/* ===== LOGOUT ===== */
+.navbar-logout {
+  background: #dc2626;
+  border: none;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.navbar-logout:hover {
+  background: #b91c1c;
+}
+
+/* ===== HAMBURGER ===== */
+.navbar-toggle {
+  background: #2563eb;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* ===== MOBILE MENU CARD ===== */
+.menu-card {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  background: #0f172a;
+  border-radius: 14px;
+  padding: 14px;
+  width: 180px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 100;
+}
+
+.menu-card.open {
+  display: flex;
+}
+
+.menu-card .navbar-link {
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.menu-card .navbar-link:hover {
+  background: #1e293b;
+  transform: translateX(4px);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .desktop-links {
+    display: none;
+  }
+}
+
+@media (min-width: 769px) {
+  .navbar-toggle {
+    display: none;
+  }
+
+  .menu-card {
+    display: none !important;
+  }
+}
