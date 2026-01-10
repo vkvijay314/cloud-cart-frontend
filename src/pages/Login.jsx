@@ -10,15 +10,19 @@ function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) =>
+  const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       setLoading(true);
-      const res = await api.post("/auth/login", form);
-      login(res.data.token, res.data.user); // 🔥 context
+
+      // ✅ FIXED PATH
+      const res = await api.post("/api/auth/login", form);
+
+      login(res.data.token, res.data.user);
       navigate("/");
     } catch (err) {
       alert(err.response?.data?.message || "Login failed");
@@ -34,10 +38,12 @@ function Login() {
       client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
       callback: async (response) => {
         try {
-          const res = await api.post("/auth/google", {
+          // ✅ FIXED PATH
+          const res = await api.post("/api/auth/google", {
             token: response.credential
           });
-          login(res.data.token, res.data.user); // 🔥 context
+
+          login(res.data.token, res.data.user);
           navigate("/");
         } catch {
           alert("Google login failed");
@@ -64,7 +70,12 @@ function Login() {
         <form onSubmit={handleSubmit}>
           <div className="auth-field">
             <label>Email</label>
-            <input name="email" value={form.email} onChange={handleChange} />
+            <input
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              required
+            />
           </div>
 
           <div className="auth-field">
@@ -74,6 +85,7 @@ function Login() {
               name="password"
               value={form.password}
               onChange={handleChange}
+              required
             />
           </div>
 
@@ -82,7 +94,10 @@ function Login() {
           </button>
         </form>
 
-        <div className="auth-divider"><span>OR</span></div>
+        <div className="auth-divider">
+          <span>OR</span>
+        </div>
+
         <div id="google-login-btn" className="google-btn-wrapper" />
 
         <p className="auth-footer">
