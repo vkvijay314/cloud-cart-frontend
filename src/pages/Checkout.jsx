@@ -25,7 +25,7 @@ function Checkout() {
   useEffect(() => {
     const fetchCart = async () => {
       try {
-        const res = await api.get("/cart");
+        const res = await api.get("/api/cart");
         setRawItems(res.data?.cart?.items || []);
       } catch (err) {
         console.error("Checkout cart error:", err);
@@ -112,7 +112,7 @@ function Checkout() {
       setPlacing(true);
 
       // Create Razorpay order (backend)
-      const orderRes = await api.post("/payment/create", {
+      const orderRes = await api.post("/api/payment/create", {
         amount: total
       });
 
@@ -126,15 +126,16 @@ function Checkout() {
 
         handler: async (response) => {
           const verifyRes = await api.post(
-            "/payment/verify",
+            "/api/payment/verify",
             response
           );
+ await api.post("/api/checkout/verify", {
+  razorpay_order_id: response.razorpay_order_id,
+  razorpay_payment_id: response.razorpay_payment_id,
+  razorpay_signature: response.razorpay_signature
+});
 
-          if (verifyRes.data.success) {
-            await api.post("/orders", {
-              address,
-              paymentMethod: "ONLINE"
-            });
+navigate("/orders");
 
             alert("Payment successful, order placed!");
             navigate("/orders");
