@@ -1,16 +1,14 @@
 import { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
 
 function Cart() {
-  const navigate = useNavigate();
-
   const [rawItems, setRawItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
+  const [checkingOut, setCheckingOut] = useState(false);
 
   /* ==============================
-     FETCH CART (SAFE)
+     FETCH CART
   ============================== */
   useEffect(() => {
     let mounted = true;
@@ -82,7 +80,7 @@ function Cart() {
   };
 
   /* ==============================
-     UPDATE QUANTITY (BACKEND SYNCED)
+     UPDATE QUANTITY
   ============================== */
   const updateQuantity = async (productId, newQuantity) => {
     if (newQuantity < 1) return;
@@ -110,6 +108,55 @@ function Cart() {
     }
   };
 
+  /* ==============================
+     CHECKOUT (WITH RAZORPAY ICON)
+  ============================== */
+  const handleCheckout = async () => {
+    try {
+      setCheckingOut(true);
+
+      // 1️⃣ Create order on backend
+      const res = await api.post("/api/checkout/create");
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: res.data.amount * 100,
+        currency: "INR",
+        order_id: res.data.orderId,
+
+        name: "Cloud Cart",
+        description: "Secure Payment",
+
+        // ✅ RAZORPAY ICON (THIS IS WHAT YOU ASKED)
+        image: "https://razorpay.com/assets/razorpay-glyph.svg",
+
+        handler: async function (response) {
+          // 2️⃣ Verify payment
+          await api.post("/api/checkout/verify", {
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature
+          });
+
+          alert("Payment successful 🎉");
+          window.location.reload(); // cart clears after payment
+        },
+
+        theme: {
+          color: "#2563eb"
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      console.error("Checkout error:", err);
+      alert("Checkout failed");
+    } finally {
+      setCheckingOut(false);
+    }
+  };
+
   if (loading) return <h3>Loading cart...</h3>;
 
   return (
@@ -123,7 +170,6 @@ function Cart() {
           <p><strong>{item.name}</strong></p>
           <p>₹ {item.price}</p>
 
-          {/* QUANTITY CONTROLS */}
           <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
             <button
               disabled={updatingId === item.productId}
@@ -167,8 +213,29 @@ function Cart() {
       {cartItems.length > 0 && (
         <div className="card">
           <h3>Total: ₹ {total}</h3>
-          <button onClick={() => navigate("/checkout")}>
-            Proceed to Checkout
+
+          {/* CHECKOUT BUTTON WITH RAZORPAY BRANDING */}
+          <button
+            disabled={checkingOut}
+            onClick={handleCheckout}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              background: "#2563eb",
+              color: "#fff",
+              border: "none",
+              padding: "10px 16px",
+              borderRadius: "6px",
+              cursor: "pointer"
+            }}
+          >
+            <img
+              src="https://razorpay.com/assets/razorpay-glyph.svg"
+              alt="Razorpay"
+              style={{ width: "18px" }}
+            />
+            {checkingOut ? "Processing..." : "Pay with Razorpay"}
           </button>
         </div>
       )}
