@@ -34,7 +34,6 @@ function Checkout() {
         setLoading(false);
       }
     };
-
     fetchCart();
   }, []);
 
@@ -66,15 +65,19 @@ function Checkout() {
     }));
   };
 
-  /* PLACE ORDER (COD) */
-  const placeOrder = async () => {
-    if (
-      !address.name ||
-      !address.phone ||
-      !address.line ||
-      !address.city ||
-      !address.pincode
-    ) {
+  const validateAddress = () => {
+    return (
+      address.name &&
+      address.phone &&
+      address.line &&
+      address.city &&
+      address.pincode
+    );
+  };
+
+  /* COD ORDER */
+  const placeCODOrder = async () => {
+    if (!validateAddress()) {
       alert("Please fill complete address");
       return;
     }
@@ -85,7 +88,6 @@ function Checkout() {
         address,
         paymentMethod: "COD"
       });
-      alert("Order placed successfully!");
       navigate("/orders");
     } catch (err) {
       console.error(err);
@@ -95,15 +97,9 @@ function Checkout() {
     }
   };
 
-  /* PAY WITH RAZORPAY (ONLINE) */
+  /* ONLINE PAYMENT (RAZORPAY) */
   const payWithRazorpay = async () => {
-    if (
-      !address.name ||
-      !address.phone ||
-      !address.line ||
-      !address.city ||
-      !address.pincode
-    ) {
+    if (!validateAddress()) {
       alert("Please fill complete address");
       return;
     }
@@ -111,42 +107,29 @@ function Checkout() {
     try {
       setPlacing(true);
 
-      // Create Razorpay order (backend)
-      const orderRes = await api.post("/api/payment/create", {
-        amount: total
-      });
+      // ✅ backend calculates amount
+      const orderRes = await api.post("/api/checkout/create");
 
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: orderRes.data.amount,
+        amount: orderRes.data.amount * 100,
         currency: "INR",
+        order_id: orderRes.data.orderId,
         name: "CloudCart",
-        description: "Order Payment",
-        order_id: orderRes.data.id,
+        description: "Secure Payment",
 
         handler: async (response) => {
-          const verifyRes = await api.post(
-            "/api/payment/verify",
-            response
-          );
- await api.post("/api/checkout/verify", {
-  razorpay_order_id: response.razorpay_order_id,
-  razorpay_payment_id: response.razorpay_payment_id,
-  razorpay_signature: response.razorpay_signature
-});
+          await api.post("/api/checkout/verify", {
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature
+          });
 
-navigate("/orders");
-
-            alert("Payment successful, order placed!");
-            navigate("/orders");
-          } else {
-            alert("Payment verification failed");
-          }
+          navigate("/orders");
         }
       };
 
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      new window.Razorpay(options).open();
     } catch (err) {
       console.error("Razorpay error:", err);
       alert("Payment failed");
@@ -162,59 +145,25 @@ navigate("/orders");
     <div style={styles.container}>
       <h2>Checkout</h2>
 
-      {/* ORDER SUMMARY */}
       <div style={styles.card}>
         <h3>Order Summary</h3>
         {cartItems.map(item => (
           <p key={item.productId}>
-            {item.name} × {item.quantity} — ₹{" "}
-            {item.price * item.quantity}
+            {item.name} × {item.quantity} — ₹ {item.price * item.quantity}
           </p>
         ))}
         <h4>Total: ₹ {total}</h4>
       </div>
 
-      {/* ADDRESS */}
       <div style={styles.card}>
         <h3>Delivery Address</h3>
-
-        <input
-          name="name"
-          placeholder="Full Name"
-          value={address.name}
-          onChange={handleChange}
-        />
-
-        <input
-          name="phone"
-          placeholder="Phone Number"
-          value={address.phone}
-          onChange={handleChange}
-        />
-
-        <input
-          name="line"
-          placeholder="Address"
-          value={address.line}
-          onChange={handleChange}
-        />
-
-        <input
-          name="city"
-          placeholder="City"
-          value={address.city}
-          onChange={handleChange}
-        />
-
-        <input
-          name="pincode"
-          placeholder="Pincode"
-          value={address.pincode}
-          onChange={handleChange}
-        />
+        <input name="name" placeholder="Full Name" value={address.name} onChange={handleChange} />
+        <input name="phone" placeholder="Phone Number" value={address.phone} onChange={handleChange} />
+        <input name="line" placeholder="Address" value={address.line} onChange={handleChange} />
+        <input name="city" placeholder="City" value={address.city} onChange={handleChange} />
+        <input name="pincode" placeholder="Pincode" value={address.pincode} onChange={handleChange} />
       </div>
 
-      {/* PAYMENT METHOD */}
       <div style={styles.card}>
         <h3>Payment Method</h3>
 
@@ -244,28 +193,16 @@ navigate("/orders");
       <button
         style={styles.btn}
         disabled={placing}
-        onClick={() =>
-          paymentMethod === "COD"
-            ? placeOrder()
-            : payWithRazorpay()
-        }
+        onClick={paymentMethod === "COD" ? placeCODOrder : payWithRazorpay}
       >
-        {placing
-          ? "Processing..."
-          : paymentMethod === "COD"
-          ? "Place Order"
-          : "Pay Now"}
+        {placing ? "Processing..." : paymentMethod === "COD" ? "Place Order" : "Pay Now"}
       </button>
     </div>
   );
 }
 
-/* STYLES */
 const styles = {
-  container: {
-    maxWidth: "600px",
-    margin: "30px auto"
-  },
+  container: { maxWidth: "600px", margin: "30px auto" },
   card: {
     background: "#fff",
     padding: "15px",
