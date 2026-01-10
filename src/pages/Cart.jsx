@@ -17,7 +17,7 @@ function Cart() {
 
     const fetchCart = async () => {
       try {
-        const res = await api.get("/cart");
+        const res = await api.get("/api/cart");
         if (mounted) {
           setRawItems(res.data?.cart?.items || []);
         }
@@ -66,7 +66,7 @@ function Cart() {
     try {
       setUpdatingId(productId);
 
-      await api.delete("/cart/remove", {
+      await api.delete("/api/cart/remove", {
         data: { productId }
       });
 
@@ -90,7 +90,7 @@ function Cart() {
     try {
       setUpdatingId(productId);
 
-      await api.put("/cart/update", {
+      await api.put("/api/cart/update", {
         productId,
         quantity: newQuantity
       });
