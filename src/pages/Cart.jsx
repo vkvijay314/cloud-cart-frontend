@@ -176,4 +176,4 @@ function Cart() {
   );
 }
 
-export default Cart; final code
+export default Cart;
