@@ -96,16 +96,25 @@ function Checkout() {
       return;
     }
 
+    if (cartItems.length === 0) {
+      alert("Cart is empty");
+      return;
+    }
+
     try {
       setPlacing(true);
-      await api.post("/orders", {
+
+      await api.post("/api/orders", {
+        items: cartItems,
         address,
-        paymentMethod: "COD"
+        paymentMethod: "COD",
+        totalAmount: total
       });
+
       navigate("/orders");
     } catch (err) {
-      console.error(err);
-      alert("Failed to place order");
+      console.error("COD order error:", err);
+      alert(err.response?.data?.message || "Failed to place order");
     } finally {
       setPlacing(false);
     }
@@ -123,7 +132,7 @@ function Checkout() {
     try {
       setPlacing(true);
 
-      // backend calculates amount securely
+      // 1️⃣ create order on backend
       const orderRes = await api.post("/api/checkout/create");
 
       const options = {
@@ -140,7 +149,9 @@ function Checkout() {
             razorpay_order_id: response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature: response.razorpay_signature,
-            address
+            address,
+            items: cartItems,
+            totalAmount: total
           });
 
           navigate("/orders");
@@ -214,7 +225,10 @@ function Checkout() {
       <button
         style={styles.btn}
         disabled={placing}
-        onClick={paymentMethod === "COD" ? placeCODOrder : payWithRazorpay}
+        onClick={() => {
+          if (placing) return;
+          paymentMethod === "COD" ? placeCODOrder() : payWithRazorpay();
+        }}
       >
         {placing
           ? "Processing..."
